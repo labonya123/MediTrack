@@ -1,27 +1,14 @@
-# MediTrack Dependencies
-# Install with: pip install -r requirements.txt
-
-# Core web framework
 flask==3.0.0
 werkzeug==3.0.1
 
-# QR Code generation
 qrcode[pil]==7.4.2
 Pillow==10.2.0
 
-# Encryption for phone numbers
 cryptography==42.0.2
 
-# Cloud sync
-# NOTE: was pinned to 2.3.0, which predates this code's API usage
-# (list-based .upsert() on reference tables, keyword-only on_conflict).
-# Pinned to the version this sync implementation was verified against.
 supabase==2.31.0
 requests>=2.31.0
 
-# Environment variables (.env file support)
 python-dotenv>=1.0.0
 
-# Production WSGI server (used by Procfile/render.yaml — NOT used by
-# `python run.py`, which still uses Flask's dev server for local work)
 gunicorn>=21.2.0
