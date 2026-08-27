@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Cloud Sync — MediTrack{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-cloud-arrow-up-fill me-2 text-success"></i>Cloud Sync Dashboard</h4>
+    <a href="/admin/dashboard" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+
+<!-- Status Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <div class="fs-1 mb-1">
+                {% if sync_status.status == 'synced' %}✅
+                {% elif sync_status.status == 'offline' %}🔴
+                {% elif sync_status.status == 'pending' %}🔄
+                {% elif sync_status.status == 'error' %}⚠️
+                {% else %}💾{% endif %}
+            </div>
+            <h6 class="fw-bold">{{ sync_status.message }}</h6>
+            <small class="text-muted">
+                {% if sync_status.last_sync_time %}
+                    Last sync: {{ sync_status.last_sync_time[:16].replace('T',' ') }}
+                {% else %}
+                    Never synced
+                {% endif %}
+            </small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <div class="fs-1 fw-bold text-warning">{{ sync_status.pending_count }}</div>
+            <h6 class="fw-bold">Records Pending</h6>
+            <small class="text-muted">Waiting to upload to Supabase</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <div class="fs-1 fw-bold text-danger">{{ sync_status.error_count }}</div>
+            <h6 class="fw-bold">Records Failed</h6>
+            <small class="text-muted">Will retry on next sync</small>
+        </div>
+    </div>
+</div>
+
+<!-- Sync Status Info -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="bi bi-arrow-repeat me-2"></i>Automatic Sync</h6>
+        <p class="text-muted small mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            Cloud sync runs automatically in the background every 45 seconds when internet is
+            available, and immediately after key actions (new patients, prescriptions, uploads,
+            user account changes).
+            No admin action is required.
+        </p>
+    </div>
+</div>
+
+<!-- Pending by Table -->
+{% if sync_status.pending_by_table %}
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <i class="bi bi-table me-2"></i>Pending Records by Table
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Table</th><th>Pending</th></tr>
+            </thead>
+            <tbody>
+            {% for table, count in sync_status.pending_by_table.items() %}
+            <tr>
+                <td><code>{{ table }}</code></td>
+                <td><span class="badge bg-warning text-dark">{{ count }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Sync History -->
+<div class="card">
+    <div class="card-header bg-light">
+        <i class="bi bi-clock-history me-2"></i>Sync History
+    </div>
+    <div class="card-body p-0">
+        {% if sync_history %}
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Time</th><th>Triggered By</th><th>Synced</th><th>Errors</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+            {% for log in sync_history %}
+            <tr>
+                <td><small>{{ log.synced_at[:16].replace('T',' ') if log.synced_at else '—' }}</small></td>
+                <td><span class="badge bg-secondary">{{ log.triggered_by or 'system' }}</span></td>
+                <td><span class="text-success fw-bold">{{ log.synced_count or 0 }}</span></td>
+                <td><span class="text-danger">{{ log.error_count or 0 }}</span></td>
+                <td>
+                    {% if log.status == 'success' %}<span class="badge bg-success">✓ Success</span>
+                    {% elif log.status == 'partial' %}<span class="badge bg-warning text-dark">⚠ Partial</span>
+                    {% else %}<span class="badge bg-danger">✗ Failed</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted p-4">
+            <i class="bi bi-cloud-slash fs-2 d-block mb-2"></i>
+            No sync history yet. The first automatic sync will run shortly.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

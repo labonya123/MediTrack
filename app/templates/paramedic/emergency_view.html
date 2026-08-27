@@ -1,0 +1,117 @@
+<!-- app/templates/paramedic/emergency_view.html -->
+<!-- PUBLIC PAGE — No login required. Shown when QR is scanned in emergency. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚕️ EMERGENCY MEDICAL INFO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #1a1a2e; color: white; font-family: 'Segoe UI', sans-serif; }
+        .emergency-header { background: #e63946; padding: 20px; text-align: center; }
+        .emergency-header h1 { font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; margin: 0; }
+        .section-card { background: #16213e; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .section-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; color: #adb5bd; margin-bottom: 10px; }
+        .allergy-item { background: #e63946; border-radius: 8px; padding: 12px; margin-bottom: 8px; font-weight: bold; }
+        .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2d3748; }
+        .blood-badge { background: #e63946; font-size: 2rem; font-weight: 900; padding: 10px 24px; border-radius: 10px; display: inline-block; }
+        .contact-item { background: #0f3460; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+        .med-item { background: #1e3a5f; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+        .powered-by { text-align: center; padding: 20px; color: #6c757d; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<!-- Emergency Header Banner -->
+<div class="emergency-header">
+    <h1>🚨 EMERGENCY MEDICAL INFORMATION 🚨</h1>
+    <p class="mb-0 mt-1" style="font-size:0.85rem; opacity:0.9;">MediTrack — Scan authorised by patient</p>
+</div>
+
+<div class="container py-3" style="max-width: 600px;">
+
+    <!-- Patient Basic Info -->
+    <div class="section-card">
+        <div class="section-title">PATIENT</div>
+        <h3 class="fw-bold mb-1">{{ patient.first_name }} {{ patient.last_name }}</h3>
+        <div class="info-row"><span>Gender</span><strong>{{ patient.gender }}</strong></div>
+        <div class="info-row"><span>Date of Birth</span><strong>{{ patient.date_of_birth }}</strong></div>
+        {% if patient.is_pregnant %}<div class="alert alert-warning mt-2 py-1 px-2 mb-0 small"><strong>⚠️ PREGNANT</strong></div>{% endif %}
+        {% if patient.organ_donor_status == 'Yes' %}<div class="alert alert-info mt-2 py-1 px-2 mb-0 small">🫀 ORGAN DONOR</div>{% endif %}
+    </div>
+
+    <!-- Blood Group — Large and visible -->
+    <div class="section-card text-center">
+        <div class="section-title">BLOOD GROUP</div>
+        <div class="blood-badge">{{ patient.blood_group or '❓ UNKNOWN' }}</div>
+    </div>
+
+    <!-- Life-Threatening Allergies — Most critical section -->
+    {% if life_threat_allergies %}
+    <div class="section-card" style="border: 2px solid #e63946;">
+        <div class="section-title" style="color: #e63946;">⚠️ LIFE-THREATENING ALLERGIES — DO NOT ADMINISTER</div>
+        {% for allergy in life_threat_allergies %}
+        <div class="allergy-item">
+            ❌ {{ allergy.allergy_name if allergy.allergy_name else allergy }}
+            {% if allergy.reaction_type %}<div style="font-size:0.85rem; font-weight:normal; margin-top:4px;">Reaction: {{ allergy.reaction_type }}</div>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="section-card">
+        <div class="section-title">LIFE-THREATENING ALLERGIES</div>
+        <p class="text-success mb-0">✅ No life-threatening allergies on record</p>
+    </div>
+    {% endif %}
+
+    <!-- Active Diseases -->
+    {% if active_diseases %}
+    <div class="section-card">
+        <div class="section-title">ACTIVE CONDITIONS</div>
+        {% for disease in active_diseases %}
+        <div class="info-row">
+            <span>{{ disease.disease_name if disease.disease_name else disease }}</span>
+            {% if disease.severity %}<span class="badge bg-warning text-dark">{{ disease.severity }}</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Current Medications -->
+    {% if current_medications %}
+    <div class="section-card">
+        <div class="section-title">CURRENT MEDICATIONS</div>
+        {% for med in current_medications %}
+        <div class="med-item">
+            💊 <strong>{{ med.generic_name if med.generic_name else med }}</strong>
+            {% if med.dose %}<span style="opacity:0.8;"> — {{ med.dose }}</span>{% endif %}
+            {% if med.frequency %}<div style="font-size:0.8rem; opacity:0.7;">{{ med.frequency }}</div>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Emergency Contacts -->
+    {% if emergency_contacts %}
+    <div class="section-card">
+        <div class="section-title">📞 EMERGENCY CONTACTS</div>
+        {% for contact in emergency_contacts %}
+        <div class="contact-item">
+            <strong>{{ contact.name if contact.name else contact }}</strong>
+            {% if contact.relationship %}<span style="opacity:0.7;"> ({{ contact.relationship }})</span>{% endif %}
+            {% if contact.phone_number %}<div><a href="tel:{{ contact.phone_number }}" style="color:#4dabf7; font-size:1.1rem;">📱 {{ contact.phone_number }}</a></div>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Data timestamp -->
+    <div class="text-center mt-3">
+        <small style="color:#6c757d;">Record last updated: {{ snapshot_time[:16].replace('T',' ') if snapshot_time != 'Unknown' else 'Unknown' }}</small>
+    </div>
+</div>
+
+<div class="powered-by">Powered by MediTrack | Cloud-Based Emergency Medical Record System</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!-- app/templates/doctor/scan_qr.html — QR scanner for doctor -->
+{% extends "base.html" %}
+{% block title %}Scan QR Code - MediTrack{% endblock %}
+{% block extra_css %}
+<style>
+#reader { width: 100%; max-width: 400px; margin: 0 auto; border-radius: 12px; overflow: hidden; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-6 text-center">
+    <h4 class="fw-bold mb-3"><i class="bi bi-qr-code-scan me-2"></i>Scan Patient QR Code</h4>
+    <div class="card mb-3">
+        <div class="card-body p-4">
+            <!-- Camera-based QR scanner using html5-qrcode library -->
+            <div id="reader"></div>
+            <div id="scan-result" class="mt-3"></div>
+            <p class="text-muted small mt-3">Point your camera at the patient's QR code.<br>Access will be granted for <strong>15 minutes</strong> only.</p>
+        </div>
+    </div>
+    <!-- Manual token entry fallback (in case camera doesn't work) -->
+    <div class="card">
+        <div class="card-body">
+            <h6 class="text-muted">Or enter QR token manually:</h6>
+            <form method="GET" id="manual-form">
+                <div class="input-group">
+                    <input type="text" id="manual-token" class="form-control" placeholder="Paste QR token here">
+                    <button type="button" onclick="submitToken()" class="btn btn-primary">Access</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<!-- html5-qrcode library for camera-based QR scanning -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+// Initialise QR code scanner using device camera
+function onScanSuccess(decodedText, decodedResult) {
+    // Extract token from the scanned URL
+    // URL format: http://localhost:5000/emergency/<token>
+    let token = decodedText;
+    if (decodedText.includes('/emergency/')) {
+        token = decodedText.split('/emergency/')[1];
+    }
+    document.getElementById('scan-result').innerHTML =
+        '<div class="alert alert-success">✅ QR Code scanned! Redirecting...</div>';
+    // Redirect doctor to access the patient record
+    setTimeout(() => { window.location.href = '/doctor/access/' + token; }, 1000);
+}
+
+function onScanError(errorMessage) {
+    // Silent error handling — scanning continuously, errors are normal
+}
+
+// Start the QR scanner with back camera
+const html5QrCode = new Html5Qrcode("reader");
+html5QrCode.start(
+    { facingMode: "environment" },  // Use back camera
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    onScanSuccess, onScanError
+).catch(err => {
+    document.getElementById('reader').innerHTML =
+        '<div class="alert alert-warning"><i class="bi bi-camera-video-off me-2"></i>Camera not available. Use manual token entry below.</div>';
+});
+
+// Manual token submission
+function submitToken() {
+    const token = document.getElementById('manual-token').value.trim();
+    if (token) { window.location.href = '/doctor/access/' + token; }
+}
+</script>
+{% endblock %}

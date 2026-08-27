@@ -1,0 +1,81 @@
+<!-- app/templates/patient/history_form.html - Generic add/edit form for
+     patient-reported conditions, allergies, hospitalizations, surgeries.
+     One template serves all four record types via `config` (see
+     HISTORY_RECORD_TYPES in app/routes/patient.py). -->
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if action == 'edit' else 'Add' }} {{ config.label }} - MediTrack{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-7">
+
+<h4 class="fw-bold mb-3">
+    <i class="bi bi-{{ 'pencil' if action == 'edit' else 'plus-circle' }} me-2 text-primary"></i>
+    {{ 'Edit' if action == 'edit' else 'Add' }} {{ config.label }}
+</h4>
+
+<div class="alert alert-secondary small">
+    <i class="bi bi-info-circle me-1"></i>
+    Records you add here are marked <strong>“Patient Reported – Not Verified”</strong>
+    until a clinician reviews them. This does not replace your doctor's records —
+    it's a way to keep your own history complete.
+</div>
+
+<div class="card">
+    <div class="card-body">
+    <form method="POST">
+
+        {% if config.master_table %}
+        <div class="mb-3">
+            <label class="form-label">{{ config.fk_label }} <span class="text-danger">*</span></label>
+            <select name="{{ config.fk_field }}" class="form-select" required {{ 'disabled' if action == 'edit' else '' }}>
+                <option value="">-- Select {{ config.fk_label }} --</option>
+                {% for opt in master_options %}
+                <option value="{{ opt.id }}" {{ 'selected' if record and record[config.fk_field] == opt.id else '' }}>{{ opt.name }}</option>
+                {% endfor %}
+            </select>
+            {% if action == 'edit' %}
+            <input type="hidden" name="{{ config.fk_field }}" value="{{ record[config.fk_field] }}">
+            <small class="text-muted">The {{ config.fk_label.lower() }} itself can't be changed after adding — delete and re-add if you picked the wrong one.</small>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% for field in config.fields %}
+        <div class="mb-3">
+            {% if field.type == 'checkbox' %}
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="{{ field.name }}" name="{{ field.name }}"
+                           {{ 'checked' if record and record[field.name] else '' }}>
+                    <label class="form-check-label" for="{{ field.name }}">{{ field.label }}</label>
+                </div>
+            {% elif field.type == 'select' %}
+                <label class="form-label">{{ field.label }}</label>
+                <select name="{{ field.name }}" class="form-select">
+                    {% for opt in field.options %}
+                    <option value="{{ opt }}" {{ 'selected' if (record and record[field.name] == opt) or (not record and opt == field.default) else '' }}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+            {% elif field.type == 'textarea' %}
+                <label class="form-label">{{ field.label }}</label>
+                <textarea name="{{ field.name }}" class="form-control" rows="3">{{ record[field.name] if record else '' }}</textarea>
+            {% elif field.type == 'date' %}
+                <label class="form-label">{{ field.label }}{% if field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                <input type="date" name="{{ field.name }}" class="form-control" value="{{ record[field.name] if record else '' }}" {{ 'required' if field.required else '' }}>
+            {% else %}
+                <label class="form-label">{{ field.label }}{% if field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                <input type="text" name="{{ field.name }}" class="form-control" value="{{ record[field.name] if record else '' }}" {{ 'required' if field.required else '' }}>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>{{ 'Save Changes' if action == 'edit' else 'Add ' + config.label }}</button>
+            <a href="{{ url_for('patient.history') }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+    </div>
+</div>
+
+</div>
+</div>
+{% endblock %}

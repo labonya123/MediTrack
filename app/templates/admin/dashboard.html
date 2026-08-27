@@ -1,0 +1,37 @@
+<!-- app/templates/admin/dashboard.html — Admin home page -->
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - MediTrack{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4"><i class="bi bi-shield-check me-2 text-success"></i>Admin Dashboard</h4>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card text-center p-3"><div class="text-primary fs-1"><i class="bi bi-people-fill"></i></div><h3 class="fw-bold">{{ stats.patient }}</h3><p class="text-muted small mb-0">Patients</p></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="text-success fs-1"><i class="bi bi-person-badge-fill"></i></div><h3 class="fw-bold">{{ stats.doctor }}</h3><p class="text-muted small mb-0">Doctors</p></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="text-warning fs-1"><i class="bi bi-truck-flatbed"></i></div><h3 class="fw-bold">{{ stats.paramedic }}</h3><p class="text-muted small mb-0">Paramedics</p></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="{{ 'text-success' if sync_info.status == 'synced' else 'text-warning' }} fs-1"><i class="bi bi-cloud-{{ 'check' if sync_info.status == 'synced' else 'arrow-up' }}-fill"></i></div><h3 class="fw-bold">{{ sync_info.icon }}</h3><p class="text-muted small mb-0">{{ sync_info.message[:25] }}</p></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><a href="/admin/users" class="card text-decoration-none text-dark text-center p-3 h-100"><i class="bi bi-people-fill text-primary fs-2"></i><p class="mt-2 fw-semibold mb-0">Manage Users</p></a></div>
+    <div class="col-md-4"><a href="/admin/add-user" class="card text-decoration-none text-dark text-center p-3 h-100"><i class="bi bi-person-plus-fill text-success fs-2"></i><p class="mt-2 fw-semibold mb-0">Add Doctor / Paramedic</p></a></div>
+    <div class="col-md-4"><a href="/admin/data-overview" class="card text-decoration-none text-dark text-center p-3 h-100"><i class="bi bi-bar-chart-fill text-info fs-2"></i><p class="mt-2 fw-semibold mb-0">Anonymised Health Data</p></a></div>
+</div>
+<!-- Recent Audit Log -->
+<div class="card">
+    <div class="card-header bg-light fw-semibold"><i class="bi bi-journal-text me-2"></i>Recent System Activity (Audit Log)</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light"><tr><th>Time</th><th>User</th><th>Role</th><th>Action</th></tr></thead>
+                <tbody>
+                {% for log in recent_audit %}
+                <tr>
+                    <td><small>{{ log.timestamp[:16].replace('T',' ') }}</small></td>
+                    <td>{{ log.username }}</td>
+                    <td><span class="badge bg-secondary">{{ log.role }}</span></td>
+                    <td><small>{{ log.action }}</small></td>
+                </tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

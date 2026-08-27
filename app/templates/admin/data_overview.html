@@ -1,0 +1,88 @@
+<!-- app/templates/admin/data_overview.html — Anonymised health statistics -->
+{% extends "base.html" %}
+{% block title %}Health Data Overview - MediTrack{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-2"><i class="bi bi-bar-chart-fill me-2 text-info"></i>Anonymised Health Data Overview</h4>
+<div class="alert alert-success small mb-4"><i class="bi bi-shield-check me-2"></i><strong>Privacy Protected:</strong> All data shown here is fully anonymised — no names, phone numbers, or Aadhaar visible.</div>
+
+{% if outbreak_clusters %}
+<div class="alert alert-danger mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Outbreak Watch</strong> — {{ outbreak_clusters|length }} district/condition combination(s) at or above {{ outbreak_threshold }} active cases:
+    <table class="table table-sm table-borderless mb-0 mt-2">
+        <tbody>
+        {% for c in outbreak_clusters %}
+            <tr>
+                <td><strong>{{ c.disease_name }}</strong>
+                    <span class="badge bg-{{ 'danger' if c.risk_level == 'Critical' else ('warning text-dark' if c.risk_level == 'High' else 'secondary') }}">{{ c.risk_level }}</span>
+                </td>
+                <td>{{ c.district }}, {{ c.state or '' }}</td>
+                <td class="text-end"><strong>{{ c.active_count }}</strong> active cases</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">Active Conditions by Category</div>
+            <div class="card-body">{% if category_stats %}
+            <div class="row">
+            {% for c in category_stats %}
+                <div class="col-md-3 col-6 mb-2">
+                    <div class="d-flex justify-content-between border rounded p-2">
+                        <span>{{ c.category_name }}</span>
+                        <strong>{{ c.active_count }}</strong>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+            {% else %}<p class="text-muted mb-0">No data available.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">Active Conditions Distribution</div>
+            <div class="card-body">{% if disease_stats %}
+            {% for d in disease_stats %}
+            <div class="d-flex justify-content-between mb-2">
+                <span>{{ d.disease_name }}</span>
+                <div>
+                    <span class="badge bg-{{ 'danger' if d.risk_level == 'Critical' else ('warning text-dark' if d.risk_level == 'High' else 'secondary') }} me-2">{{ d.risk_level }}</span>
+                    <strong>{{ d.patient_count }}</strong>
+                </div>
+            </div>{% endfor %}
+            {% else %}<p class="text-muted">No data available.</p>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">Blood Group Distribution</div>
+            <div class="card-body">{% for b in blood_group_stats %}
+            <div class="d-flex justify-content-between mb-2">
+                <span class="badge bg-danger">{{ b.blood_group }}</span>
+                <strong>{{ b.count }} patients</strong>
+            </div>{% endfor %}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">Geographic Coverage</div>
+            <div class="card-body">{% for d in district_stats %}
+            <div class="mb-2">
+                <strong>{{ d.district or 'Unknown' }}</strong>, {{ d.state or '' }}
+                <small class="text-muted d-block">{{ d.patient_count }} patients | {{ d.chronic_count }} chronic</small>
+            </div>{% endfor %}</div>
+        </div>
+    </div>
+</div>
+<div class="alert alert-info mt-4 small"><i class="bi bi-graph-up me-2"></i><strong>Roadmap:</strong> Outbreak clustering and category rollups above are a first pass. Time-series trend charts (cases over time, not just current snapshot) and a geographic heatmap are natural next steps once there's enough real data to make them meaningful.</div>
+{% endblock %}

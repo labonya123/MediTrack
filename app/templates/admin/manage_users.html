@@ -1,0 +1,33 @@
+<!-- app/templates/admin/manage_users.html -->
+{% extends "base.html" %}
+{% block title %}Manage Users - MediTrack{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Manage Users</h4>
+    <a href="/admin/add-user" class="btn btn-success btn-sm"><i class="bi bi-person-plus me-1"></i>Add User</a>
+</div>
+<div class="card">
+<div class="table-responsive">
+<table class="table table-hover mb-0">
+    <thead class="table-light"><tr><th>Username</th><th>Role</th><th>Status</th><th>Joined</th><th>Last Login</th><th>Action</th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+        <td><strong>{{ u.username }}</strong></td>
+        <td><span class="badge bg-{{ 'success' if u.role == 'doctor' else ('primary' if u.role == 'patient' else ('warning text-dark' if u.role == 'admin' else 'info')) }}">{{ u.role }}</span></td>
+        <td><span class="badge {{ 'bg-success' if u.is_active else 'bg-danger' }}">{{ 'Active' if u.is_active else 'Inactive' }}</span></td>
+        <td><small>{{ u.created_at[:10] if u.created_at else 'N/A' }}</small></td>
+        <td><small>{{ u.last_login[:10] if u.last_login else 'Never' }}</small></td>
+        <td>
+            {% if u.is_active and u.user_id != session.user_id %}
+            <form method="POST" action="/admin/deactivate/{{ u.user_id }}" onsubmit="return confirm('Deactivate this user?')">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Deactivate</button>
+            </form>
+            {% endif %}
+        </td>
+    </tr>{% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+{% endblock %}

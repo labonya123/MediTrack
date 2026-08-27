@@ -1,0 +1,58 @@
+<!-- app/templates/auth/login.html -->
+<!-- Login page for all roles (patient, doctor, admin, paramedic) -->
+{% extends "base.html" %}
+{% block title %}Login - MediTrack{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="text-center mb-4">
+            <i class="bi bi-heart-pulse-fill text-success" style="font-size: 3rem;"></i>
+            <h2 class="fw-bold mt-2">MediTrack</h2>
+            <p class="text-muted">Secure Health Records System</p>
+        </div>
+        <div class="card">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h5 class="mb-0"><i class="bi bi-lock-fill me-2"></i>Sign In to Your Account</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="/login">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" name="username" class="form-control" placeholder="Enter your username" required autofocus>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+                </form>
+                <hr>
+                <div class="text-center">
+                    <p class="mb-1 text-muted small">New patient? Create your account</p>
+                    <a href="/register" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-person-plus me-1"></i>Register as Patient
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Quick login hints for testing -->
+        <div class="card mt-3 border-warning">
+            <div class="card-body py-2 px-3">
+                <p class="mb-1 small fw-bold text-warning"><i class="bi bi-info-circle me-1"></i>Test Accounts:</p>
+                <small class="text-muted d-block">Admin: admin / admin123</small>
+                <small class="text-muted d-block">Doctor: dr_sharma / doctor123</small>
+                <small class="text-muted d-block">Patient: rahul_kumar / patient123</small>
+                <small class="text-muted d-block">Paramedic: paramedic1 / para123</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

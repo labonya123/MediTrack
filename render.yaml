@@ -1,0 +1,54 @@
+# Render.com Blueprint — https://render.com/docs/blueprint-spec
+#
+# Lets you deploy MediTrack by connecting this repo in the Render
+# dashboard ("New +" → "Blueprint") instead of configuring every field
+# by hand. Secrets are intentionally left blank (sync: false) — Render
+# will prompt you to fill them in during setup rather than reading them
+# from this file, so nothing sensitive ends up committed to git.
+#
+# A persistent disk is required: MediTrack's source of truth is the local
+# SQLite file, plus uploaded QR codes and medical report files. Without a
+# disk, Render's filesystem is ephemeral and everything local is wiped on
+# every deploy/restart.
+#
+# IMPORTANT: persistent disks are NOT available on Render's free plan at
+# all (confirmed against Render's docs) — only paid plans support them.
+# That means this app, as architected (SQLite as local source of truth),
+# cannot be deployed durably on Render's free tier: cloud sync would keep
+# re-uploading the same seed data every restart, and any records created
+# between restarts would simply vanish. `plan: starter` below is the
+# cheapest tier that supports a disk. If free-tier cost is a hard
+# requirement, the real fix is architectural — move the source of truth to
+# Render's managed Postgres (free tier includes it) instead of local
+# SQLite — which is a bigger change than this pass covers.
+
+services:
+  - type: web
+    name: meditrack
+    runtime: python
+    plan: starter   # cheapest plan that supports a persistent disk — see note above
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 60
+    disk:
+      name: meditrack-data
+      mountPath: /opt/render/project/src/app/static/uploads
+      sizeGB: 1
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: USE_CLOUD
+        value: "True"
+      - key: SYNC_INTERVAL_SECONDS
+        value: "300"
+      - key: APP_BASE_URL
+        sync: false   # set to your actual Render URL, e.g. https://meditrack.onrender.com
+      - key: SECRET_KEY
+        generateValue: true   # Render generates and stores a strong random value
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SEED_DEMO_DATA
+        value: "False"   # only set True temporarily for a throwaway demo deploy

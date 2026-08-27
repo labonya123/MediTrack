@@ -1,0 +1,114 @@
+<!-- app/templates/auth/register.html -->
+<!-- Patient self-registration page -->
+{% extends "base.html" %}
+{% block title %}Register - MediTrack{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-success text-white py-3">
+                <h5 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>Create Patient Account</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="/register">
+                    <h6 class="text-muted mb-3 border-bottom pb-2">🔐 Login Credentials</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Username *</label>
+                            <input type="text" name="username" class="form-control" required
+                                value="{{ form_data.username if form_data else '' }}" placeholder="Choose a username">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Phone Number</label>
+                            <input type="tel" name="phone_number" class="form-control"
+                                value="{{ form_data.phone_number if form_data else '' }}" placeholder="Your mobile number">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Password *</label>
+                            <input type="password" name="password" class="form-control" required minlength="6" placeholder="Minimum 6 characters">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Confirm Password *</label>
+                            <input type="password" name="confirm_password" class="form-control" required placeholder="Repeat password">
+                        </div>
+                    </div>
+
+                    <h6 class="text-muted mb-3 border-bottom pb-2 mt-3">👤 Personal Information</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">First Name *</label>
+                            <input type="text" name="first_name" class="form-control" required
+                                value="{{ form_data.first_name if form_data else '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Last Name *</label>
+                            <input type="text" name="last_name" class="form-control" required
+                                value="{{ form_data.last_name if form_data else '' }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Gender *</label>
+                            <select name="gender" class="form-select" required>
+                                <option value="">Select...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Date of Birth *</label>
+                            <input type="date" name="date_of_birth" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Blood Group</label>
+                            <select name="blood_group" class="form-select">
+                                <option value="">Unknown</option>
+                                {% for bg in ['A+','A-','B+','B-','O+','O-','AB+','AB-'] %}
+                                <option value="{{ bg }}">{{ bg }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <h6 class="text-muted mb-3 border-bottom pb-2 mt-3">📍 Location</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Village / Town</label>
+                            <input type="text" name="village_name" class="form-control"
+                                value="{{ form_data.village_name if form_data else '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">District</label>
+                            <input type="text" name="district" class="form-control"
+                                value="{{ form_data.district if form_data else '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">State</label>
+                            <input type="text" name="state" class="form-control"
+                                value="{{ form_data.state if form_data else '' }}">
+                        </div>
+                    </div>
+
+                    <h6 class="text-muted mb-3 border-bottom pb-2 mt-3">🔒 Security (Optional)</h6>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Aadhaar Number</label>
+                        <input type="text" name="aadhaar" class="form-control" placeholder="12-digit Aadhaar number"
+                            maxlength="12" pattern="[0-9]{12}">
+                        <div class="form-text text-muted"><i class="bi bi-shield-check me-1 text-success"></i>Stored as encrypted hash only — never readable by anyone</div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg fw-semibold">
+                            <i class="bi bi-check-circle me-2"></i>Create My Account
+                        </button>
+                        <a href="/login" class="btn btn-outline-secondary">Already have an account? Sign In</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

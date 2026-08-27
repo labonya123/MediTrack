@@ -1,0 +1,190 @@
+<!-- app/templates/doctor/patient_view.html — Doctor's view of patient records (15-min session) -->
+{% extends "base.html" %} 
+{% block title %}Patient Record - MediTrack{% endblock %}
+{% block content %}
+
+{% macro verify_btn(record_type, record_id) %}
+<form method="POST" action="{{ url_for('doctor.verify_record', record_type=record_type, record_id=record_id) }}" class="d-inline ms-2">
+    <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" style="font-size:0.75rem;">
+        <i class="bi bi-patch-check me-1"></i>Verify
+    </button>
+</form>
+{% endmacro %}
+
+<!-- Session Timer — counts down from 15 minutes -->
+<div class="session-timer mb-3 d-flex justify-content-between align-items-center" id="timer-bar">
+    <span><i class="bi bi-clock me-2"></i>Session Time Remaining: <strong id="timer-display">{{ session_status.minutes_remaining }}m {{ session_status.seconds_remaining }}s</strong></span>
+    <a href="/doctor/scan" class="btn btn-sm btn-warning"><i class="bi bi-qr-code-scan me-1"></i>Scan Again</a>
+</div>
+
+<!-- Patient Header -->
+<div class="card mb-3 border-primary">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="fw-bold mb-1">{{ patient.first_name }} {{ patient.last_name }}</h4>
+                <span class="badge bg-{{ 'danger' if patient.gender == 'Male' else 'pink' }} me-2">{{ patient.gender }}</span>
+                {% if patient_age is not none %}<span class="badge bg-primary me-2">Age: {{ patient_age }}</span>{% endif %}
+                <span class="badge bg-warning text-dark me-2">Blood: {{ patient.blood_group or 'Unknown' }}</span>
+                {% if patient.is_pregnant %}<span class="badge bg-pink">Pregnant</span>{% endif %}
+                {% if patient.organ_donor_status == 'Yes' %}<span class="badge bg-success">Organ Donor</span>{% endif %}
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="/doctor/prescribe/{{ patient.patient_id }}" class="btn btn-success">
+                    <i class="bi bi-file-plus me-1"></i>Write Prescription
+                </a>
+            </div>
+        </div>
+        <!-- Life-threat allergy warning banner -->
+        {% if patient.has_life_threat_allergy %}
+        <div class="alert alert-danger mt-2 py-2 mb-0"><strong>⚠️ WARNING: LIFE-THREATENING ALLERGY ON RECORD — Check allergy section before prescribing!</strong></div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Allergies — shown first for safety -->
+<div class="card mb-3">
+    <div class="card-header bg-warning text-dark fw-semibold"><i class="bi bi-exclamation-triangle me-2"></i>Allergies</div>
+    <div class="card-body">
+        {% if allergies %}{% for a in allergies %}
+        <div class="p-2 mb-1 rounded {{ 'bg-danger text-white' if a.is_life_threatening else 'bg-light' }}">
+            {% if a.is_life_threatening %}<strong>⚠️ LIFE THREATENING: </strong>{% endif %}
+            <strong>{{ a.allergy_name }}</strong> — {{ a.reaction_type or 'No reaction specified' }}
+            {% if a.recorded_by == 'patient' %}<span class="badge bg-secondary ms-2">Patient Reported – Not Verified</span>{{ verify_btn('allergy', a.patient_allergy_id) }}{% endif %}
+            {% if a.verified_by_doctor %}<span class="badge bg-success ms-2">Verified</span>{% endif %}
+        </div>
+        {% endfor %}{% else %}<p class="text-muted mb-0">No allergies on record.</p>{% endif %}
+    </div>
+</div>
+
+<!-- Current Medications -->
+<div class="card mb-3">
+    <div class="card-header bg-primary text-white fw-semibold"><i class="bi bi-capsule me-2"></i>Medications</div>
+    <div class="card-body">
+        {% if medications %}
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead><tr><th>Medication</th><th>Dose</th><th>Frequency</th><th>Status</th></tr></thead>
+                <tbody>{% for m in medications %}
+                <tr class="{{ 'table-success' if m.is_currently_taking else '' }}">
+                    <td><strong>{{ m.generic_name }}</strong><small class="text-muted d-block">{{ m.brand_name or '' }}</small></td>
+                    <td>{{ m.dose or 'N/A' }}</td>
+                    <td>{{ m.frequency or 'N/A' }}</td>
+                    <td><span class="badge {{ 'bg-success' if m.is_currently_taking else 'bg-secondary' }}">{{ 'Current' if m.is_currently_taking else 'Past' }}</span></td>
+                </tr>{% endfor %}</tbody>
+            </table>
+        </div>
+        {% else %}<p class="text-muted mb-0">No medications on record.</p>{% endif %}
+    </div>
+</div>
+
+<!-- Diseases & Prescriptions in tabs -->
+<ul class="nav nav-tabs mb-3" id="recordTabs">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#diseases-tab">Conditions</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#prescriptions-tab">Prescriptions ({{ prescriptions|length }})</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#reports-tab">Reports ({{ reports|length }})</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history-tab">Hospital/Surgery</a></li>
+</ul>
+<div class="tab-content">
+    <!-- Diseases Tab -->
+    <div class="tab-pane fade show active" id="diseases-tab">
+        <div class="card"><div class="card-body">
+        {% if diseases %}{% for d in diseases %}
+        <div class="d-flex align-items-center border-bottom py-2">
+            <span class="badge {{ 'bg-danger' if d.status == 'Active' else ('bg-warning text-dark' if d.status == 'Controlled' else 'bg-success') }} me-3">{{ d.status }}</span>
+            <div><strong>{{ d.disease_name }}</strong> <code class="ms-2">{{ d.icd10_code or '' }}</code>
+            {% if d.recorded_by == 'patient' %}<span class="badge bg-secondary ms-2">Patient Reported – Not Verified</span>{{ verify_btn('condition', d.patient_disease_id) }}{% endif %}
+            <small class="text-muted d-block">Diagnosed: {{ d.diagnosed_date or 'Unknown' }} | Severity: {{ d.severity }}</small></div>
+        </div>{% endfor %}
+        {% else %}<p class="text-muted">No conditions recorded.</p>{% endif %}
+        </div></div>
+    </div>
+    <!-- Prescriptions Tab -->
+    <div class="tab-pane fade" id="prescriptions-tab">
+        <div class="card"><div class="card-body">
+        {% if prescriptions %}{% for p in prescriptions %}
+        <div class="border-bottom pb-3 mb-3">
+            <div class="d-flex justify-content-between"><strong>{{ p.prescription_date }}</strong><small class="text-muted">Dr. {{ p.doctor_username }}</small></div>
+            <p class="mb-1"><strong>Diagnosis:</strong> {{ p.diagnosis or 'N/A' }}</p>
+            {% for med in p.medications_list %}<span class="badge bg-light text-dark border me-1">{{ med.name }} {{ med.dose }}</span>{% endfor %}
+            {% if p.instructions %}<p class="text-muted small mt-1">{{ p.instructions }}</p>{% endif %}
+        </div>{% endfor %}
+        {% else %}<p class="text-muted">No prescriptions.</p>{% endif %}
+        </div></div>
+    </div>
+    <!-- Reports Tab -->
+    <div class="tab-pane fade" id="reports-tab">
+        <div class="card"><div class="card-body">
+        {% if reports %}{% for r in reports %}
+        <div class="d-flex align-items-center border-bottom py-2">
+            <i class="bi bi-{{ 'file-pdf text-danger' if r.file_type == 'pdf' else 'image text-primary' }} me-3" style="font-size:1.5rem;"></i>
+            <div class="flex-grow-1"><strong>{{ r.file_name }}</strong><small class="text-muted d-block">{{ r.upload_date[:10] }}{% if r.description %} — {{ r.description }}{% endif %}</small>
+            {% if r.recorded_by == 'patient' %}<span class="badge bg-secondary mt-1">Patient Reported – Not Verified</span>{% endif %}</div>
+            <a href="{{ url_for('doctor.view_report', report_id=r.report_id) }}"
+               target="_blank" rel="noopener noreferrer"
+               class="btn btn-sm btn-outline-primary ms-2">
+                <i class="bi bi-eye me-1"></i>View
+            </a>
+            {% if r.recorded_by == 'patient' %}{{ verify_btn('report', r.report_id) }}{% endif %}
+        </div>{% endfor %}
+        {% else %}<p class="text-muted">No uploaded reports.</p>{% endif %}
+        </div></div>
+    </div>
+    <!-- Hospitalization/Surgery Tab -->
+    <div class="tab-pane fade" id="history-tab">
+        <div class="card"><div class="card-body">
+        {% if hospitalizations %}{% for h in hospitalizations %}
+        <div class="border-start border-info border-3 ps-3 mb-3">
+            <strong>{{ h.hospital_name or 'Hospital' }}</strong> — <small>{{ h.admission_date }} to {{ h.discharge_date or 'Ongoing' }}</small>
+            {% if h.recorded_by == 'patient' %}<span class="badge bg-secondary ms-2">Patient Reported – Not Verified</span>{{ verify_btn('hospitalization', h.hospitalization_id) }}{% endif %}
+            <p class="small mb-0">{{ h.reason or '' }}</p>
+        </div>{% endfor %}{% endif %}
+        {% if surgeries %}{% for s in surgeries %}
+        <div class="border-start border-secondary border-3 ps-3 mb-3">
+            <strong>{{ s.procedure_name }}</strong> — <small>{{ s.surgery_date }}</small>
+            {% if s.recorded_by == 'patient' %}<span class="badge bg-secondary ms-2">Patient Reported – Not Verified</span>{{ verify_btn('surgery', s.surgery_id) }}{% endif %}
+            {% if s.complications %}<p class="small text-danger mb-0">Complications: {{ s.complications }}</p>{% endif %}
+        </div>{% endfor %}{% endif %}
+        {% if not hospitalizations and not surgeries %}<p class="text-muted">No hospitalization or surgery records.</p>{% endif %}
+        </div></div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// Countdown timer — checks session status every 30 seconds
+let totalSeconds = {{ (session_status.minutes_remaining * 60 + session_status.seconds_remaining) }};
+const patientId = "{{ patient.patient_id }}";
+
+function updateTimer() {
+    if (totalSeconds <= 0) {
+        document.getElementById('timer-bar').classList.add('timer-urgent');
+        document.getElementById('timer-display').textContent = 'EXPIRED';
+        alert('⏰ Session expired! You will be redirected to scan QR again.');
+        window.location.href = '/doctor/scan';
+        return;
+    }
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    document.getElementById('timer-display').textContent = mins + 'm ' + secs + 's';
+    if (totalSeconds <= 120) { // Turn red when 2 minutes left
+        document.getElementById('timer-bar').classList.add('timer-urgent');
+    }
+    totalSeconds--;
+}
+
+setInterval(updateTimer, 1000);
+
+// Every 30 seconds, verify session is still valid server-side
+setInterval(() => {
+    fetch('/doctor/session-status/' + patientId)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.valid) {
+                alert('Session expired: ' + data.reason);
+                window.location.href = '/doctor/scan';
+            }
+        });
+}, 30000);
+</script>
+{% endblock %}

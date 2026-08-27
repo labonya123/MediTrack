@@ -1,0 +1,37 @@
+<!-- app/templates/patient/prescriptions.html -->
+{% extends "base.html" %}
+{% block title %}My Prescriptions - MediTrack{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4"><i class="bi bi-file-medical me-2 text-success"></i>My Prescriptions</h4>
+{% if prescriptions %}
+{% for p in prescriptions %}
+<div class="card mb-3">
+    <div class="card-header bg-light d-flex justify-content-between">
+        <span><i class="bi bi-calendar me-2"></i>{{ p.prescription_date }}</span>
+        <span class="text-muted small">By: Dr. {{ p.doctor_username }}</span>
+    </div>
+    <div class="card-body">
+        {% if p.diagnosis %}<p><strong>Diagnosis:</strong> {{ p.diagnosis }}</p>{% endif %}
+        {% if p.medications_list %}
+        <h6 class="text-primary">Medications:</h6>
+        <ul class="list-group list-group-flush mb-3">
+            {% for med in p.medications_list %}
+            <li class="list-group-item d-flex align-items-center">
+                <i class="bi bi-capsule text-primary me-3"></i>
+                <div>
+                    <strong>{{ med.name }}</strong>
+                    <small class="text-muted d-block">{{ med.dose }} — {{ med.frequency }}</small>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if p.instructions %}<div class="alert alert-info py-2"><i class="bi bi-info-circle me-2"></i>{{ p.instructions }}</div>{% endif %}
+        {% if p.follow_up_date %}<p class="mb-0 text-success"><i class="bi bi-calendar-check me-2"></i><strong>Follow-up:</strong> {{ p.follow_up_date }}</p>{% endif %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="text-center py-5"><i class="bi bi-file-medical text-muted" style="font-size:3rem;"></i><p class="text-muted mt-3">No prescriptions on record yet.</p></div>
+{% endif %}
+{% endblock %}

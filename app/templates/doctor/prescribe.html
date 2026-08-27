@@ -1,0 +1,48 @@
+<!-- app/templates/doctor/prescribe.html — Write a prescription -->
+{% extends "base.html" %}
+{% block title %}Write Prescription - MediTrack{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-3"><i class="bi bi-file-plus me-2 text-success"></i>Write Prescription for {{ patient.first_name }} {{ patient.last_name }}</h4>
+<div class="session-timer mb-3"><i class="bi bi-clock me-2"></i>Session: {{ session_status.minutes_remaining }}m remaining</div>
+<div class="card">
+<div class="card-body p-4">
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Diagnosis</label>
+        <input type="text" name="diagnosis" class="form-control" placeholder="e.g., Type 2 Diabetes - Follow up" required>
+    </div>
+    <h6 class="fw-semibold mb-2">Medications</h6>
+    <div id="medications-container">
+        <div class="row g-2 mb-2 medication-row">
+            <div class="col-md-5"><input type="text" name="med_name[]" class="form-control" placeholder="Medication name"></div>
+            <div class="col-md-3"><input type="text" name="med_dose[]" class="form-control" placeholder="Dose (e.g. 500mg)"></div>
+            <div class="col-md-4"><input type="text" name="med_frequency[]" class="form-control" placeholder="Frequency"></div>
+        </div>
+    </div>
+    <button type="button" onclick="addMedRow()" class="btn btn-outline-primary btn-sm mb-3"><i class="bi bi-plus me-1"></i>Add Medication</button>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Instructions for Patient</label>
+        <textarea name="instructions" class="form-control" rows="3" placeholder="e.g., Take with food. Rest for 3 days."></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Follow-up Date</label>
+        <input type="date" name="follow_up_date" class="form-control" style="max-width:200px;">
+    </div>
+    <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-2"></i>Save Prescription</button>
+    <a href="/doctor/patient/{{ patient.patient_id }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+</form>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function addMedRow() {
+    const row = `<div class="row g-2 mb-2 medication-row">
+        <div class="col-md-5"><input type="text" name="med_name[]" class="form-control" placeholder="Medication name"></div>
+        <div class="col-md-3"><input type="text" name="med_dose[]" class="form-control" placeholder="Dose"></div>
+        <div class="col-md-4"><input type="text" name="med_frequency[]" class="form-control" placeholder="Frequency"></div>
+    </div>`;
+    document.getElementById('medications-container').insertAdjacentHTML('beforeend', row);
+}
+</script>
+{% endblock %}

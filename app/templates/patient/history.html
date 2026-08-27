@@ -1,0 +1,137 @@
+<!-- app/templates/patient/history.html - Medical History page -->
+{% extends "base.html" %}
+{% block title %}Medical History - MediTrack{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4"><i class="bi bi-clock-history me-2 text-primary"></i>My Medical History</h4>
+
+<!-- Diseases -->
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-virus me-2"></i>Diagnosed Conditions</span>
+        <a href="{{ url_for('patient.add_history_record', record_type='condition') }}" class="btn btn-sm btn-light"><i class="bi bi-plus-lg me-1"></i>Add Condition</a>
+    </div>
+    <div class="card-body">
+        {% if diseases %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead><tr><th>Condition</th><th>ICD-10</th><th>Diagnosed</th><th>Status</th><th>Severity</th><th></th></tr></thead>
+                <tbody>
+                {% for d in diseases %}
+                <tr>
+                    <td>
+                        <strong>{{ d.disease_name }}</strong>{% if d.is_chronic %}<span class="badge bg-warning text-dark ms-1">Chronic</span>{% endif %}
+                        {% if d.recorded_by == 'patient' %}<span class="badge bg-secondary ms-1" title="Entered by the patient, not yet reviewed by a clinician">Patient Reported – Not Verified</span>{% endif %}
+                        {% if d.notes %}<small class="text-muted d-block">{{ d.notes }}</small>{% endif %}
+                    </td>
+                    <td><code>{{ d.icd10_code or 'N/A' }}</code></td>
+                    <td>{{ d.diagnosed_date or 'Unknown' }}</td>
+                    <td><span class="badge bg-{{ 'success' if d.status == 'Recovered' else ('warning text-dark' if d.status == 'Controlled' else 'danger') }}">{{ d.status }}</span></td>
+                    <td>{{ d.severity }}</td>
+                    <td class="text-end">
+                        {% if d.recorded_by == 'patient' %}
+                        <a href="{{ url_for('patient.edit_history_record', record_type='condition', record_id=d.patient_disease_id) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                        <form method="POST" action="{{ url_for('patient.delete_history_record', record_type='condition', record_id=d.patient_disease_id) }}" class="d-inline" onsubmit="return confirm('Remove this condition from your record?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<p class="text-muted">No diagnosed conditions on record.</p>{% endif %}
+    </div>
+</div>
+
+<!-- Allergies -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-exclamation-triangle me-2"></i>Allergies</span>
+        <a href="{{ url_for('patient.add_history_record', record_type='allergy') }}" class="btn btn-sm btn-dark"><i class="bi bi-plus-lg me-1"></i>Add Allergy</a>
+    </div>
+    <div class="card-body">
+        {% if allergies %}
+        {% for a in allergies %}
+        <div class="d-flex align-items-center p-2 mb-2 rounded {{ 'bg-danger bg-opacity-10 border border-danger' if a.is_life_threatening else 'bg-light' }}">
+            {% if a.is_life_threatening %}<span class="life-threat-badge me-3">⚠️ LIFE THREATENING</span>{% endif %}
+            <div class="flex-grow-1">
+                <strong>{{ a.allergy_name }}</strong>
+                {% if a.recorded_by == 'patient' %}<span class="badge bg-secondary ms-1" title="Entered by the patient, not yet reviewed by a clinician">Patient Reported – Not Verified</span>{% endif %}
+                <small class="text-muted d-block">Reaction: {{ a.reaction_type or 'N/A' }} | Category: {{ a.category_name or 'N/A' }}</small>
+                {% if a.notes %}<small class="text-muted d-block">{{ a.notes }}</small>{% endif %}
+            </div>
+            {% if a.verified_by_doctor %}<span class="badge bg-success ms-2">Doctor Verified</span>{% endif %}
+            {% if a.recorded_by == 'patient' %}
+            <a href="{{ url_for('patient.edit_history_record', record_type='allergy', record_id=a.patient_allergy_id) }}" class="btn btn-sm btn-outline-secondary ms-2" title="Edit"><i class="bi bi-pencil"></i></a>
+            <form method="POST" action="{{ url_for('patient.delete_history_record', record_type='allergy', record_id=a.patient_allergy_id) }}" class="d-inline ms-1" onsubmit="return confirm('Remove this allergy from your record?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}<p class="text-muted">No allergies on record.</p>{% endif %}
+    </div>
+</div>
+
+<!-- Hospitalizations -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-hospital me-2"></i>Hospitalizations</span>
+        <a href="{{ url_for('patient.add_history_record', record_type='hospitalization') }}" class="btn btn-sm btn-light"><i class="bi bi-plus-lg me-1"></i>Add Hospitalization</a>
+    </div>
+    <div class="card-body">
+        {% if hospitalizations %}
+        {% for h in hospitalizations %}
+        <div class="border-start border-info border-3 ps-3 mb-3 d-flex justify-content-between align-items-start">
+            <div>
+                <strong>{{ h.hospital_name or 'Unknown Hospital' }}</strong> — {{ h.district or '' }}
+                {% if h.recorded_by == 'patient' %}<span class="badge bg-secondary ms-1" title="Entered by the patient, not yet reviewed by a clinician">Patient Reported – Not Verified</span>{% endif %}
+                <small class="text-muted d-block">{{ h.admission_date }} → {{ h.discharge_date or 'Ongoing' }}</small>
+                <small class="d-block">Reason: {{ h.reason or 'Not specified' }}</small>
+                {% if h.notes %}<small class="text-muted d-block">{{ h.notes }}</small>{% endif %}
+            </div>
+            {% if h.recorded_by == 'patient' %}
+            <div class="text-nowrap">
+                <a href="{{ url_for('patient.edit_history_record', record_type='hospitalization', record_id=h.hospitalization_id) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('patient.delete_history_record', record_type='hospitalization', record_id=h.hospitalization_id) }}" class="d-inline" onsubmit="return confirm('Remove this hospitalization record?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}<p class="text-muted">No hospitalization records.</p>{% endif %}
+    </div>
+</div>
+
+<!-- Surgeries -->
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-scissors me-2"></i>Surgeries</span>
+        <a href="{{ url_for('patient.add_history_record', record_type='surgery') }}" class="btn btn-sm btn-light"><i class="bi bi-plus-lg me-1"></i>Add Surgery</a>
+    </div>
+    <div class="card-body">
+        {% if surgeries %}
+        {% for s in surgeries %}
+        <div class="border-start border-secondary border-3 ps-3 mb-3 d-flex justify-content-between align-items-start">
+            <div>
+                <strong>{{ s.procedure_name }}</strong>
+                {% if s.recorded_by == 'patient' %}<span class="badge bg-secondary ms-1" title="Entered by the patient, not yet reviewed by a clinician">Patient Reported – Not Verified</span>{% endif %}
+                <small class="text-muted d-block">Date: {{ s.surgery_date }} | {{ s.hospital_name or 'Unknown' }}</small>
+                {% if s.complications %}<small class="text-danger d-block">{{ s.complications }}</small>{% endif %}
+            </div>
+            {% if s.recorded_by == 'patient' %}
+            <div class="text-nowrap">
+                <a href="{{ url_for('patient.edit_history_record', record_type='surgery', record_id=s.surgery_id) }}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="{{ url_for('patient.delete_history_record', record_type='surgery', record_id=s.surgery_id) }}" class="d-inline" onsubmit="return confirm('Remove this surgery record?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}<p class="text-muted">No surgery records.</p>{% endif %}
+    </div>
+</div>
+{% endblock %}
